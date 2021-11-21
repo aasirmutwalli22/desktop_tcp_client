@@ -13,72 +13,98 @@ class RemotesListPage extends StatefulWidget{
 }
 
 class _RemotesListPageState extends State<RemotesListPage> {
+  var connected = false;
+  var selectedIndex = 0;
 
-  final nameController = TextEditingController();
   final hostController = TextEditingController();
   final portController = TextEditingController();
+  final outputController = TextEditingController();
+  final inputController = TextEditingController();
 
   var remotes = <RemoteServer>[
-    const RemoteServer(name: 'rx', host: '192.168.1.100', port: 3333),
-    const RemoteServer(name: 'kp', host: '192.168.2.100', port: 3333),
-    const RemoteServer(name: 'et', host: '192.168.3.100', port: 3333),
+    const RemoteServer(host: '192.168.1.100', port: 3333),
+    const RemoteServer(host: '192.168.2.100', port: 3333),
+    const RemoteServer(host: '192.168.3.100', port: 3333),
   ];
 
   @override
   Widget build(context) {
-    return  Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved remotes'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey.shade900,
-        elevation: 0,
-        shape: const Border(
-          bottom: BorderSide(color: Colors.grey,),
+    return Row(
+      children: [
+        // AnimatedContainer(
+        //   color: connected ? Colors.green : Colors.red,
+        //   duration: const Duration(seconds: 1),
+        //   width: 360,
+        //   child: leftPanel(),
+        // ),
+        SizedBox(
+          width: 360,
+          child: leftPanel(),
         ),
-      ),
-      backgroundColor: Colors.white,
-      body: Row(
-        children: [
-          SizedBox(
-            width: 300,
-            child: drawerScreen(),
-          ),
+        // if(connected)
           const VerticalDivider(color: Colors.grey,),
+        // if(connected)
           Expanded(
-            child: Column(
-              children: [
-                const Expanded(
-                  child: TextField(),
-                ),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: TextField(),
-                    ),
-                    IconButton(onPressed: (){}, icon: const Icon(Icons.send,),),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          child: rightPanel(),
+        ),
+      ],
     );
   }
-  Widget drawerScreen(){
+
+  Widget leftPanel(){
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+          title: const Text('Saved remotes'),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.grey.shade900,
+          elevation: 0,
+          shape: const Border(
+            bottom: BorderSide(color: Colors.grey,),
+          ),
+          actions : [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: (){
+                ScaffoldMessenger.of(context).showMaterialBanner(
+                    MaterialBanner(
+                      actions: [
+                        TextButton(
+                          child: const Text('Close'),
+                          onPressed : () {
+                            ScaffoldMessenger.of(context).clearMaterialBanners();
+                          },
+                        )
+                      ],
+                      content: const Text('banner'),
+                ));
+
+              },
+            )
+          ],
+      ),
       body: ListView.builder(
         itemCount: remotes.length,
-        itemBuilder: (context, index) => ListTile(
-          title: Text(remotes[index].name),
-          subtitle: Text('${remotes[index].host}:${remotes[index].port}'),
-          shape: shape,
-          trailing: IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => setState(() => remotes.removeAt(index)),
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(right: 4.0, top: 4.0, bottom: 4.0),
+          child: ListTile(
+            // title: Text(remotes[index].name),
+            title: Text('${remotes[index].host}:${remotes[index].port}'),
+            shape:  const RoundedRectangleBorder(
+              borderRadius: BorderRadius.horizontal(right: Radius.circular(4.0)),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () => setState(() => remotes.removeAt(index)),
+            ),
+            onTap: (){
+              setState(() {
+                connected = true;
+                selectedIndex = index;
+              });
+            },
+            tileColor: index == selectedIndex ? Colors.indigo.shade100 : Colors.grey.shade200,
           ),
-          onTap: (){},
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -94,72 +120,144 @@ class _RemotesListPageState extends State<RemotesListPage> {
       ),
     );
   }
+
+  Widget rightPanel(){
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(remotes.isNotEmpty ? '${remotes[selectedIndex].host}:${remotes[selectedIndex].port}' : ''),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.grey.shade900,
+        elevation: 0,
+        shape: const Border(
+          bottom: BorderSide(color: Colors.grey,),
+        ),
+        actions : [
+          const Padding(
+            padding: EdgeInsets.all(4.0),
+            child: Center(child: Text('Connected',),),
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.close),
+            label: const Text('CLOSE'),
+            onPressed: (){
+              setState(() {
+                connected = false;
+              });
+            },
+            style : TextButton.styleFrom(
+              shape: shape,
+            ),
+          )
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: inputController,
+              maxLines: null,
+              expands: true,
+              readOnly: true,
+              decoration: InputDecoration.collapsed(
+                hintText: '',
+                fillColor: Colors.grey.shade300,
+                filled: true,
+              ),
+            ),
+          ),
+          Card(
+            shape: const ContinuousRectangleBorder(),
+            elevation: 0,
+            child: TextField(
+              controller: outputController,
+              maxLines: 4,
+              minLines: 1,
+              keyboardType: TextInputType.multiline,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Message',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4.0),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade800,
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4.0),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade800,
+                    width: 2,
+                  ),
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.send,),
+                  onPressed: (){
+                    setState((){
+                      inputController.text += outputController.text;
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   showAddRemoteServerDialog(){
     showDialog(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (context) => AlertDialog(
         titlePadding: const EdgeInsets.all(8.0),
         contentPadding: const EdgeInsets.all(8.0),
-        title: const Text('Add remote', textAlign: TextAlign.center),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'name',
-                border: OutlineInputBorder(),
+        title: const Text('Add remote', textAlign: TextAlign.center,),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: TextField(
+                controller: hostController,
+                decoration: const InputDecoration(
+                  labelText: 'host',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: TextField(
-              controller: hostController,
-              decoration: const InputDecoration(
-                labelText: 'host',
-                border: OutlineInputBorder(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: TextField(
+                controller: portController,
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'port',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: TextField(
-              controller: portController,
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-              ],
-              decoration: const InputDecoration(
-                labelText: 'port',
-                border: OutlineInputBorder(),
-              ),
+          ],
+        ),
+        actions: [
+          OutlinedButton.icon(
+            onPressed: ()=> Navigator.of(context).pop(),
+            icon: const Icon(Icons.cancel),
+            label: const Text('Cancel'),
+            style: OutlinedButton.styleFrom(
+              primary: Colors.grey.shade900,
             ),
           ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: OutlinedButton.icon(
-              onPressed: ()=> Navigator.of(context)
-                  .pop(RemoteServer(name: nameController.text, host: hostController.text, port: int.tryParse(portController.text) ?? 0)),
-              icon: const Icon(Icons.add),
-              label: const Text('Add'),
-              style: OutlinedButton.styleFrom(
-                primary: Colors.grey.shade900,
-                shape: shape,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: OutlinedButton.icon(
-              onPressed: ()=> Navigator.of(context).pop(),
-              icon: const Icon(Icons.cancel),
-              label: const Text('Cancel'),
-              style: OutlinedButton.styleFrom(
-                primary: Colors.grey.shade900,
-                shape: shape,
-              ),
+          OutlinedButton.icon(
+            onPressed: ()=> Navigator.of(context).pop(RemoteServer(host: hostController.text, port: int.tryParse(portController.text) ?? 0)),
+            icon: const Icon(Icons.add),
+            label: const Text('Add'),
+            style: OutlinedButton.styleFrom(
+              primary: Colors.grey.shade900,
             ),
           ),
         ],
