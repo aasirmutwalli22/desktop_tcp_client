@@ -74,30 +74,30 @@ class _HomePageState extends State<HomePage> {
   Widget tcpConnectedPage(){
     return Column(
       children: [
-        Expanded(
-          child: ListView.builder(
-            itemCount: chats.length,
-            itemBuilder: (context, index) => Padding(
-              padding: chats[index].direction == Direction.outgoing ? const EdgeInsets.only(
-                top: 4, bottom: 4, right: 4, left: 16,
-              ) : const EdgeInsets.only(
-                top: 4, bottom: 4, right: 16, left: 4,
-              ),
-              child: ListTile(
-                title: Text(chats[index].message),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: chats[index].direction == Direction.outgoing ? const Radius.circular(16) : const Radius.circular(0),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: const Radius.circular(16),
-                    bottomRight: chats[index].direction == Direction.outgoing ? const Radius.circular(0) : const Radius.circular(16),
-                  )
-                ),
-                tileColor: chats[index].direction == Direction.outgoing ? Colors.indigo.shade50 : Colors.red.shade50,
-              ),
-            ),
-          ),
-        ),
+        // Expanded(
+        //   child: ListView.builder(
+        //     itemCount: chats.length,
+        //     itemBuilder: (context, index) => Padding(
+        //       padding: chats[index].direction == Direction.outgoing ? const EdgeInsets.only(
+        //         top: 4, bottom: 4, right: 4, left: 16,
+        //       ) : const EdgeInsets.only(
+        //         top: 4, bottom: 4, right: 16, left: 4,
+        //       ),
+        //       child: ListTile(
+        //         title: Text(chats[index].message),
+        //         shape: RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.only(
+        //             topLeft: chats[index].direction == Direction.outgoing ? const Radius.circular(16) : const Radius.circular(0),
+        //             topRight: const Radius.circular(16),
+        //             bottomLeft: const Radius.circular(16),
+        //             bottomRight: chats[index].direction == Direction.outgoing ? const Radius.circular(0) : const Radius.circular(16),
+        //           )
+        //         ),
+        //         tileColor: chats[index].direction == Direction.outgoing ? Colors.indigo.shade50 : Colors.red.shade50,
+        //       ),
+        //     ),
+        //   ),
+        // ),
         // Expanded(
         //   child: TextField(
         //     controller: inputController,
@@ -111,8 +111,70 @@ class _HomePageState extends State<HomePage> {
         //     ),
         //   ),
         // ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
+        // Padding(
+        //   padding: const EdgeInsets.all(8.0),
+        //   child: TextField(
+        //     controller: outputController,
+        //     autofocus: true,
+        //     keyboardType: TextInputType.multiline,
+        //     maxLines: 4,
+        //     minLines: 1,
+        //     decoration: InputDecoration(
+        //       hintText: 'Message',
+        //       border: OutlineInputBorder(
+        //         borderRadius: BorderRadius.circular(4.0),
+        //         borderSide: BorderSide(
+        //           color: Colors.grey.shade800,
+        //           width: 2,
+        //         ),
+        //       ),
+        //       suffixIcon: IconButton(
+        //         icon: const Icon(Icons.send,),
+        //         onPressed: (){
+        //           if(connected) {
+        //             socket!.write(outputController.text);
+        //             setState(() => chats.add(Chat(outputController.text, Direction.outgoing)));
+        //             outputController.clear();
+        //           }
+        //         },
+        //       ),
+        //     ),
+        //   ),
+        // ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: chats.length,
+            itemBuilder: (context, index) => Align(
+              alignment: chats[index].direction == Direction.outgoing ? Alignment.centerRight: Alignment.centerLeft,
+              child: Container(
+                margin: chats[index].direction == Direction.outgoing ? const EdgeInsets.only(
+                  top: 4, bottom: 4, right: 8, left: 32,
+                ) : const EdgeInsets.only(
+                  top: 4, bottom: 4, right: 32, left: 8,
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Text(chats[index].message),
+                decoration : BoxDecoration(
+                  color: chats[index].direction == Direction.outgoing ? Colors.indigo.shade50 : Colors.red.shade50,
+                  borderRadius: chats[index].direction == Direction.outgoing
+                      ? const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(0),
+                  ) : const BorderRadius.only(
+                    topLeft: Radius.circular(0),
+                    topRight: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Card(
+          margin: const EdgeInsets.all(8.0),
           child: TextField(
             controller: outputController,
             autofocus: true,
@@ -122,7 +184,7 @@ class _HomePageState extends State<HomePage> {
             decoration: InputDecoration(
               hintText: 'Message',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4.0),
+                borderRadius: BorderRadius.circular(16.0),
                 borderSide: BorderSide(
                   color: Colors.grey.shade800,
                   width: 2,
