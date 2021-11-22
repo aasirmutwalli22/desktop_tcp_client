@@ -1,6 +1,6 @@
 {
-    "name": "tcp_client",
-    "short_name": "tcp_client",
+    "name": "desktop_tcp_client",
+    "short_name": "desktop_tcp_client",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

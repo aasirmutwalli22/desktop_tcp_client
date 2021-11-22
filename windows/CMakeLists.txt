@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(tcp_client LANGUAGES CXX)
+project(desktop_tcp_client LANGUAGES CXX)
 
-set(BINARY_NAME "tcp_client")
+set(BINARY_NAME "desktop_tcp_client")
 
 cmake_policy(SET CMP0063 NEW)
 

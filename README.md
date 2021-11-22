@@ -1,6 +1,6 @@
-# tcp_client
+# desktop_tcp_client
 
-tcp client implementation for android, ios, windows and linux.
+A new Flutter project.
 
 ## Getting Started
 
