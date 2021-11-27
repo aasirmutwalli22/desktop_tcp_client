@@ -1,30 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:desktop_tcp_client/chat_tile.dart';
 import 'package:flutter/material.dart';
-
-const outgoingMessageAlignment = Alignment.centerRight;
-const incomingMessageAlignment = Alignment.centerLeft;
-final outgoingMessageColor = Colors.indigo.shade100;
-final incomingMessageColor = Colors.red.shade100;
-const outgoingMessagePadding = EdgeInsets.only( top: 4, bottom: 4, right: 8, left: 32,);
-const incomingMessagePadding = EdgeInsets.only( top: 4, bottom: 4, right: 32, left: 8,);
-const outgoingMessageBorderRadius = BorderRadius.only(
-  topLeft: Radius.circular(16),
-  topRight: Radius.circular(16),
-  bottomLeft: Radius.circular(16),
-  bottomRight: Radius.circular(0),
-) ;
-const incomingMessageBorderRadius = BorderRadius.only(
-  topLeft: Radius.circular(0),
-  topRight: Radius.circular(16),
-  bottomLeft: Radius.circular(16),
-  bottomRight: Radius.circular(16),
-);
+import 'package:flutter/services.dart';
+import 'chat.dart';
+import 'remote.dart';
 
 class ClientPage extends StatefulWidget{
-  final String host;
-  final int port;
-  const ClientPage({Key? key, required this.host, required this.port}) : super(key: key);
+  final Remote remote;
+  const ClientPage({Key? key, required this.remote}) : super(key: key);
   @override State<ClientPage> createState() => _ClientPageState();
 }
 
@@ -53,7 +37,7 @@ class _ClientPageState extends State<ClientPage> {
   Widget build(context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.host}:${widget.port}'),
+        title: Text('${widget.remote.host}:${widget.remote.port}'),
       ),
       body: socket == null ? const LinearProgressIndicator() : Column(
         children: [
@@ -61,37 +45,30 @@ class _ClientPageState extends State<ClientPage> {
             child: ListView.builder(
               controller: chatListViewController,
               itemCount: chats.length,
-              itemBuilder: (context, index) => Align(
-                alignment: chats[index].direction == Direction.outgoing
-                    ? outgoingMessageAlignment
-                    : incomingMessageAlignment,
-                child: Container(
-                  margin: chats[index].direction == Direction.outgoing
-                      ? outgoingMessagePadding
-                      : incomingMessagePadding,
-                  padding: const EdgeInsets.all(16),
-                  child: Text(chats[index].message),
-                  decoration : BoxDecoration(
-                    color: chats[index].direction == Direction.outgoing
-                        ? outgoingMessageColor
-                        : incomingMessageColor,
-                    borderRadius: chats[index].direction == Direction.outgoing
-                        ? outgoingMessageBorderRadius
-                        : incomingMessageBorderRadius,
-                  ),
-                ),
-              ),
+              itemBuilder: (context, index) =>
+              chats[index].direction == Direction.incoming ?
+              ChatTile.incoming(chats[index].message) :
+              chats[index].direction == Direction.outgoing ?
+              ChatTile.outgoing(chats[index].message) :
+              ChatTile.system(chats[index].message),
             ),
           ),
           Container(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.keyboard_return),
-                  onPressed: ()=> setState(() => sendEnter = !sendEnter),
-                  color: sendEnter ? Colors.indigo.shade400 : Colors.grey.shade700,
-                  tooltip: 'Send enter on end',
+                Tooltip(
+                  message: 'Send enter at end',
+                  child: TextButton(
+                    onPressed: ()=> setState(() => sendEnter = !sendEnter),
+                    child: const Icon(Icons.keyboard_return,),
+                    style: TextButton.styleFrom(
+                      shape: const CircleBorder(),
+                      fixedSize: const Size.fromRadius(20),
+                      backgroundColor: sendEnter ? Colors.indigo.shade100 : Colors.grey.shade300,
+                      primary: sendEnter ? Colors.indigo.shade400 : Colors.grey.shade400,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: TextField(
@@ -117,57 +94,23 @@ class _ClientPageState extends State<ClientPage> {
               ],
             ),
           ),
-
         ],
       ),
-      // bottomNavigationBar: Container(
-      //   padding: const EdgeInsets.all(8.0),
-      //   child: Row(
-      //     children: [
-      //       IconButton(
-      //         icon: const Icon(Icons.keyboard_return),
-      //         onPressed: ()=> setState(() => sendEnter = !sendEnter),
-      //         color: sendEnter ? Colors.indigo.shade400 : Colors.grey.shade700,
-      //         tooltip: 'Send enter on end',
-      //       ),
-      //       Expanded(
-      //         child: TextField(
-      //           controller: outputController,
-      //           keyboardType: TextInputType.multiline,
-      //           maxLines: 4,
-      //           minLines: 1,
-      //           decoration: InputDecoration(
-      //             hintText: 'Message',
-      //             suffixIcon: IconButton(
-      //               icon: const Icon(Icons.send,),
-      //               onPressed: (){
-      //                 if(connected) {
-      //                   socket!.write(outputController.text + (sendEnter ? '\n' : ''));
-      //                   setState(() => chats.add(Chat(outputController.text, Direction.outgoing)));
-      //                   outputController.clear();
-      //                 }
-      //               },
-      //             ),
-      //           ),
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
     );
   }
 
   void connect(){
-    Socket.connect(widget.host, widget.port).then((value) {
+    Socket.connect(widget.remote.host, widget.remote.port).then((value) {
       setState(() {
         chats.clear();
         connected = true;
         socket = value;
+        setState(() => chats.add(Chat("remote connected", Direction.system)));
       });
       value.listen((event) {
         // inputController.text += ascii.decode(event);
-        chatListViewController.jumpTo(chatListViewController.position.maxScrollExtent);
         setState(() => chats.add(Chat(ascii.decode(event), Direction.incoming)));
+        chatListViewController.jumpTo(chatListViewController.position.maxScrollExtent);
       },
         onDone: () {
           // if(socket != null) setState(() {
@@ -175,10 +118,11 @@ class _ClientPageState extends State<ClientPage> {
           //   socket = null;
           // });// TODO: implement initState
           // if(socket != null) Navigator.of(context).pop();
+          chats.add(Chat("remote connected", Direction.system));
           try {
             if(socket != null) Navigator.of(context).pop();
           } catch (e) {
-            print(e);
+            // print(e);
           }
         },
         onError: (_, __,)=> ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_))),
@@ -191,13 +135,4 @@ class _ClientPageState extends State<ClientPage> {
   }
 }
 
-class Chat{
-  final String message;
-  final int direction;
-  Chat(this.message, this.direction);
-}
 
-class Direction{
-  static const int incoming = 0;
-  static const int outgoing = 1;
-}
