@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'chat.dart';
 import 'remote.dart';
 const _tableRemotes = 'remotes';
 const _tableChats = 'chats';
@@ -39,23 +40,49 @@ class DbHandler {
     );
   }
   
-  static Future<bool>? addRemote(Remote remote) => database
+  static Future<bool>? addRemote(Remote remote) {
+    return database
       ?.insert(_tableRemotes, remote.toMap())
       .then((value) => value != 0);
+  }
   
-  static Future<bool>? deleteRemote(Remote remote) => database
+  static Future<bool>? deleteRemote(Remote remote) {
+    return database
       ?.delete(_tableRemotes, where: '$_columnHost = ? AND $_columnPort = ? ', whereArgs: [remote.host, remote.port])
       .then((value) => value != 0);
+  }
 
   static Future<bool>? isAvailable(Remote remote) {
     return database
-        ?.rawQuery('SELECT COUNT(*) FROM $_tableRemotes WHERE $_columnHost = "${remote.host}" AND $_columnPort = "${remote.port}"')
+        ?.rawQuery('SELECT * FROM $_tableRemotes WHERE $_columnHost = "${remote.host}" AND $_columnPort = "${remote.port}"')
         .then((value) => value.isNotEmpty);
   }
 
-  static Future<List<Remote>>? get remotes => database
+  static Future<List<Remote>>? remotes() {
+    return database
       ?.rawQuery('SELECT * FROM $_tableRemotes')
       .then((value) => value
       .map((e) => Remote.from(e))
       .toList());
+  }
+
+  static Future<bool>? addChat(Chat chat){
+    return database
+        ?.insert(_tableChats, chat.toMap())
+        .then((value) => value != 0);
+  }
+
+  static Future<List<Chat>>? chats(Remote remote) {
+    return database
+        ?.rawQuery('SELECT * FROM $_tableChats WHERE host = "${remote.host}" AND port = "${remote.port}"')
+        .then((value) => value
+        .map((e) => Chat.from(e))
+        .toList());
+  }
+
+  static Future<bool>? deleteChats(Remote remote) {
+    return database
+        ?.delete(_tableChats, where: '$_columnHost = ? AND $_columnPort = ? ', whereArgs: [remote.host, remote.port])
+        .then((value) => value != 0);
+  }
 }

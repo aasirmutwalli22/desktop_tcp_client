@@ -50,7 +50,7 @@ class ChatTile extends StatelessWidget{
     this.onLongPress,
   }) : super(key: key);
 
-  ChatTile.incoming(String message, {Key? key}) : this(
+  ChatTile.incoming(String message, {Key? key, void Function()? onLongPress,}) : this(
     key: key,
     alignment : incomingMessageAlignment,
     color : incomingMessageColor,
@@ -58,9 +58,10 @@ class ChatTile extends StatelessWidget{
     padding: incomingMessagePadding,
     borderRadius: incomingMessageBorderRadius,
     message: message,
+    onLongPress: onLongPress,
   );
 
-  ChatTile.outgoing(String message, {Key? key}) : this(
+  ChatTile.outgoing(String message, {Key? key, void Function()? onLongPress,}) : this(
     key: key,
     alignment : outgoingMessageAlignment,
     color : outgoingMessageColor,
@@ -68,6 +69,7 @@ class ChatTile extends StatelessWidget{
     padding: outgoingMessagePadding,
     borderRadius: outgoingMessageBorderRadius,
     message: message,
+    onLongPress: onLongPress,
   );
   ChatTile.system(String message, {Key? key}) : this(
     key: key,
