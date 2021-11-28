@@ -19,20 +19,17 @@ class ClientPage extends StatefulWidget{
   @override State<ClientPage> createState() => _ClientPageState();
 }
 
-
 class _ClientPageState extends State<ClientPage> {
-  var sendEnter = false;
-  ConnectionStatus connectionStatus = ConnectionStatus.disconnected;
-  var chats = <Chat>[];
-  final outputController = TextEditingController();
   final chatListViewController = ScrollController();
+  final outputController = TextEditingController();
+  var connectionStatus = ConnectionStatus.disconnected;
+  var sendEnter = false;
   Socket? socket;
 
   @override
   void initState() {
     super.initState();
     sync();
-    // connect();
   }
 
   @override
@@ -47,9 +44,8 @@ class _ClientPageState extends State<ClientPage> {
       appBar: AppBar(
         title: Text('${widget.remote.host}:${widget.remote.port}'),
         actions: [
-
           IconButton(
-            icon: const Icon(Icons.link),
+            icon: Icon(connectionStatus == ConnectionStatus.connected ? Icons.link_off : Icons.link),
             color: Colors.indigo.shade400,
             onPressed: connectionStatus == ConnectionStatus.connected ? disconnect : connect,
             tooltip: connectionStatus == ConnectionStatus.connected ? 'Disconnect' : 'Connect',
@@ -62,13 +58,13 @@ class _ClientPageState extends State<ClientPage> {
           Expanded(
             child: ListView.builder(
               controller: chatListViewController,
-              itemCount: chats.length,
+              itemCount: DbHandler.chats.length,
               itemBuilder: (context, index) =>
-              chats[index].direction == Direction.incoming ?
-              ChatTile.incoming(chats[index].message, onLongPress: () => copyMessageToClipboard(chats[index]),) :
-              chats[index].direction == Direction.outgoing ?
-              ChatTile.outgoing(chats[index].message, onLongPress: () => copyMessageToClipboard(chats[index]),) :
-              ChatTile.system(chats[index].message),
+              DbHandler.chats[index].direction == Direction.incoming ?
+              ChatTile.incoming(DbHandler.chats[index].message, onLongPress: () => copyMessageToClipboard(DbHandler.chats[index]),) :
+              DbHandler.chats[index].direction == Direction.outgoing ?
+              ChatTile.outgoing(DbHandler.chats[index].message, onLongPress: () => copyMessageToClipboard(DbHandler.chats[index]),) :
+              ChatTile.system(DbHandler.chats[index].message),
             ),
           ),
           Container(
@@ -103,11 +99,11 @@ class _ClientPageState extends State<ClientPage> {
                         onPressed: (){
                           if(connectionStatus == ConnectionStatus.connected) {
                             socket!.write(outputController.text + (sendEnter ? '\n' : ''));
-                            setState(() => chats.add(Chat.fromRemote(
-                              message: outputController.text,
+                            addChat(Chat.fromRemote(
+                              message: outputController.text  + (sendEnter ? '\n' : ''),
                               direction: Direction.outgoing,
                               remote: widget.remote,
-                            )));
+                            ),);
                             outputController.clear();
                           }
                         },
@@ -171,14 +167,15 @@ class _ClientPageState extends State<ClientPage> {
 
   void addChat(Chat chat){
     setState(() {
-      chats.add(chat);
+      DbHandler.chats.add(chat);
       DbHandler.addChat(chat);
     });
   }
 
   void sync(){
-    DbHandler.chats(widget.remote)!.then((value) => setState(() => chats = value));
+    DbHandler.syncChats(widget.remote).then((value) => setState((){}));
   }
+
   void copyMessageToClipboard(Chat chat){
     Clipboard.setData(ClipboardData(text: chat.message));
     ScaffoldMessenger.of(context).showSnackBar(
